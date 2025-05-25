@@ -16,7 +16,6 @@
 #include <memory>
 
 class MainWindow : public SingletonWindow {
-    Q_OBJECT
 
 public:
     MainWindow(QWidget* parent = nullptr);
