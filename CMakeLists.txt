@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
     src/main.cpp
-    src/SingletonWindow.cpp
+
     src/DocumentAdapter.cpp
     src/TextDecorator.cpp
     src/EditCommand.cpp
@@ -28,7 +28,7 @@ set(SOURCES
 )
 
 set(HEADERS
-    include/SingletonWindow.hpp
+
     include/DocumentAdapter.hpp
     include/TextDecorator.hpp
     include/EditCommand.hpp

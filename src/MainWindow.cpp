@@ -2,8 +2,18 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QFileInfo>
 
-MainWindow::MainWindow(QWidget* parent) : SingletonWindow(parent) {
+std::unique_ptr<MainWindow> MainWindow::instance = nullptr;
+
+MainWindow* MainWindow::getInstance(QWidget* parent) {
+    if (!instance) {
+        instance.reset(new MainWindow(parent));
+    }
+    return instance.get();
+}
+
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     tabs = new QTabWidget(this);
     setCentralWidget(tabs);
 

@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
-#include "SingletonWindow.hpp"
 #include "DocumentAdapter.hpp"
 #include "TextDecorator.hpp"
 #include "EditCommand.hpp"
@@ -14,12 +13,16 @@
 #include <QTextEdit>
 #include <QVector>
 #include <memory>
+#include <QMainWindow>
 
-class MainWindow : public SingletonWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget* parent = nullptr);
+    static MainWindow* getInstance(QWidget* parent = nullptr);
+
+    MainWindow(const MainWindow&) = delete;
+    MainWindow& operator=(const MainWindow&) = delete;
 
 private slots:
     void openFile();
@@ -30,6 +33,8 @@ private slots:
     void toggleMode();
 
 private:
+    explicit MainWindow(QWidget* parent = nullptr);
+
     QTabWidget* tabs;
     QVector<std::shared_ptr<TextComponent>> editors;
     QVector<QString> filePaths;
@@ -39,6 +44,8 @@ private:
     std::shared_ptr<DocumentSubject> subject;
     std::shared_ptr<FileFacade> fileFacade;
     std::shared_ptr<EditorContext> editorContext;
+
+    static std::unique_ptr<MainWindow> instance;
 };
 
 #endif // MAINWINDOW_HPP
