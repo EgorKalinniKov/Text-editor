@@ -15,12 +15,12 @@ public:
 // Receiver
 class TextReceiver {
 public:
-    TextReceiver(QString& text);
+    TextReceiver(const QString& text);
     void setText(const QString& newText);
     QString getText() const;
 
 private:
-    QString& textContent;
+    QString textContent;
 };
 
 // Concrete Command

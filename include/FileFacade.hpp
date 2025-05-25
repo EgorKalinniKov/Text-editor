@@ -8,7 +8,7 @@ class FileFacade {
 public:
     FileFacade();
     QString loadFile(const QString& filePath, const QString& format);
-    void saveFile(const QString& filePath, const QString& content, const QString& format);
+    bool saveFile(const QString& path, const QString& content);
 
 private:
     class FileFacadeImpl;

@@ -1,12 +1,23 @@
 #include "FileProxy.hpp"
+#include <QFile>
+#include <QTextStream>
 
 QString RealFileSubject::readFile(const QString& filePath) {
-    // Simplified
-    return "Real content from " + filePath;
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return "";
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    return in.readAll();
 }
 
 void RealFileSubject::writeFile(const QString& filePath, const QString& content) {
-    // Simplified
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+
+    QTextStream out(&file);
+    out.setCodec("UTF-8");
+    out << content;
 }
 
 FileAccessProxy::FileAccessProxy() : realSubject(std::make_shared<RealFileSubject>()) {}

@@ -33,6 +33,23 @@ void SpellCheckDecorator::setText(const QString& text) {
 }
 
 QString SpellCheckDecorator::checkSpelling(const QString& text) {
-    // Simplified spell check
-    return text + " [Spell-checked]";
+    return text;
+}
+
+#include "TextDecorator.hpp"
+
+GrammarCheckDecorator::GrammarCheckDecorator(std::shared_ptr<TextComponent> component)
+    : TextDecorator(component) {}
+
+QString GrammarCheckDecorator::getText() {
+    QString text = wrapped->getText();
+    return checkGrammar(text);
+}
+
+void GrammarCheckDecorator::setText(const QString& text) {
+    wrapped->setText(text);
+}
+
+QString GrammarCheckDecorator::checkGrammar(const QString& text) {
+    return text;
 }

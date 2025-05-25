@@ -1,5 +1,7 @@
 #include "FileFacade.hpp"
 #include "DocumentAdapter.hpp"
+#include <QFile>
+#include <QTextStream>
 
 class FileFacade::FileFacadeImpl {
 public:
@@ -22,7 +24,7 @@ public:
         } else if (format == ".rtf") {
             adapter = std::make_unique<RtfDocumentAdapter>();
         } else {
-            return;
+            return; // неподдерживаемый формат
         }
         adapter->saveDocument(filePath, content);
     }
@@ -34,6 +36,11 @@ QString FileFacade::loadFile(const QString& filePath, const QString& format) {
     return impl->loadFile(filePath, format);
 }
 
-void FileFacade::saveFile(const QString& filePath, const QString& content, const QString& format) {
-    impl->saveFile(filePath, content, format);
+bool FileFacade::saveFile(const QString& path, const QString& content) {
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+    QTextStream out(&file);
+    out.setCodec("UTF-8");
+    out << content;
+    return true;
 }

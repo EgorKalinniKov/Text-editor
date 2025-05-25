@@ -44,4 +44,15 @@ private:
     QString checkSpelling(const QString& text);
 };
 
+// Concrete Decorator B (Grammar Check)
+class GrammarCheckDecorator : public TextDecorator {
+public:
+    GrammarCheckDecorator(std::shared_ptr<TextComponent> component);
+    QString getText() override;
+    void setText(const QString& text) override;
+
+private:
+    QString checkGrammar(const QString& text);
+};
+
 #endif // TEXTDECORATOR_HPP

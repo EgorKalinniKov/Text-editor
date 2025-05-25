@@ -1,6 +1,7 @@
 #include "EditCommand.hpp"
 
-TextReceiver::TextReceiver(QString& text) : textContent(text) {}
+TextReceiver::TextReceiver(const QString& text) : textContent(text) {}
+
 
 void TextReceiver::setText(const QString& newText) {
     textContent = newText;

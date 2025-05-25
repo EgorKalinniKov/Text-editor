@@ -19,22 +19,29 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    static MainWindow* getInstance(QWidget* parent = nullptr);
-
+    static MainWindow* getInstance();  // Без parent
     MainWindow(const MainWindow&) = delete;
     MainWindow& operator=(const MainWindow&) = delete;
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+    virtual ~MainWindow() = default;
+
 private slots:
+    void newFile();
     void openFile();
     void saveFile();
     void undo();
     void redo();
     void countCharacters();
     void toggleMode();
+    void closeTab(int index);
 
 private:
-    explicit MainWindow(QWidget* parent = nullptr);
+    explicit MainWindow();  // Только приватный
+    static MainWindow* instance;
 
+    QAction* saveAction;
     QTabWidget* tabs;
     QVector<std::shared_ptr<TextComponent>> editors;
     QVector<QString> filePaths;
@@ -44,8 +51,6 @@ private:
     std::shared_ptr<DocumentSubject> subject;
     std::shared_ptr<FileFacade> fileFacade;
     std::shared_ptr<EditorContext> editorContext;
-
-    static std::unique_ptr<MainWindow> instance;
 };
 
 #endif // MAINWINDOW_HPP
