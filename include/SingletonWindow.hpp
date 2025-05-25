@@ -5,10 +5,13 @@
 #include <memory>
 
 class SingletonWindow : public QMainWindow {
+    Q_OBJECT
+
 public:
     static SingletonWindow* getInstance(QWidget* parent = nullptr);
     SingletonWindow(const SingletonWindow&) = delete;
     SingletonWindow& operator=(const SingletonWindow&) = delete;
+    ~SingletonWindow() = default;
 
 protected:
     SingletonWindow(QWidget* parent = nullptr);
