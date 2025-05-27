@@ -15,29 +15,27 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
     src/main.cpp
-    src/FileHandler.cpp
-    src/DocumentAdapter.cpp
+    src/MainWindow.cpp
     src/TextDecorator.cpp
-    src/EditCommand.cpp
+    src/DocumentAdapter.cpp
+    src/FileHandler.cpp
+    src/Command.cpp
     src/DocumentObserver.cpp
     src/TextIterator.cpp
-    src/FileFacade.cpp
-    src/FileProxy.cpp
     src/EditorState.cpp
-    src/MainWindow.cpp
+    src/FileFacade.cpp
 )
 
 set(HEADERS
-    include/FileHandler.hpp
-    include/DocumentAdapter.hpp
+    include/MainWindow.hpp
     include/TextDecorator.hpp
-    include/EditCommand.hpp
+    include/DocumentAdapter.hpp
+    include/FileHandler.hpp
+    include/Command.hpp
     include/DocumentObserver.hpp
     include/TextIterator.hpp
-    include/FileFacade.hpp
-    include/FileProxy.hpp
     include/EditorState.hpp
-    include/MainWindow.hpp
+    include/FileFacade.hpp
 )
 
 add_executable(TextEditorProject ${SOURCES} ${HEADERS})

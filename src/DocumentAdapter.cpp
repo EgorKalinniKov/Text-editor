@@ -1,48 +1,46 @@
 #include "DocumentAdapter.hpp"
 #include "FileHandler.hpp"
-#include <QRegularExpression>
+#include <QFile>
+#include <QTextStream>
+#include <stdexcept>
 
 QString TextDocumentAdapter::loadDocument(const QString& filePath) {
     try {
-        return FileHandler::readFile(filePath);
+        return FileHandler::getInstance().readFile(filePath);
     } catch (const std::exception& e) {
-        return QString("Error: %1").arg(e.what());
+        throw std::runtime_error(QString("Text document load error: %1").arg(e.what()).toStdString());
     }
 }
 
 void TextDocumentAdapter::saveDocument(const QString& filePath, const QString& content) {
-    try {
-        FileHandler::writeFile(filePath, content);
-    } catch (const std::exception& e) {
-        throw; // Пробрасываем исключение выше для обработки в Facade
+    if (!FileHandler::getInstance().writeFile(filePath, content)) {
+        throw std::runtime_error("Failed to save text document");
     }
 }
 
 QString RtfDocumentAdapter::loadDocument(const QString& filePath) {
     try {
-        QString content = FileHandler::readFile(filePath);
+        QString content = FileHandler::getInstance().readFile(filePath);
         return stripRtfFormatting(content);
     } catch (const std::exception& e) {
-        return QString("Error: %1").arg(e.what());
+        throw std::runtime_error(QString("RTF document load error: %1").arg(e.what()).toStdString());
     }
 }
 
 void RtfDocumentAdapter::saveDocument(const QString& filePath, const QString& content) {
-    try {
-        QString rtfContent = addRtfFormatting(content);
-        FileHandler::writeFile(filePath, rtfContent);
-    } catch (const std::exception& e) {
-        throw; // Пробрасываем исключение выше для обработки в Facade
+    QString rtfContent = addRtfFormatting(content);
+    if (!FileHandler::getInstance().writeFile(filePath, rtfContent)) {
+        throw std::runtime_error("Failed to save RTF document");
     }
 }
 
-QString RtfDocumentAdapter::stripRtfFormatting(const QString& content) {
-    // Здесь должна быть реальная логика удаления RTF форматирования
-    return content;
+QString RtfDocumentAdapter::stripRtfFormatting(const QString& text) {
+    // Здесь должна быть реализация удаления RTF форматирования
+    return text.simplified();
 }
 
-QString RtfDocumentAdapter::addRtfFormatting(const QString& content) {
-    // Здесь должна быть реальная логика добавления RTF форматирования
-    return QString("{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Arial;}}\n"
-                  "\\viewkind4\\uc1\\pard\\lang1033\\f0\\fs20 %1}").arg(content);
+QString RtfDocumentAdapter::addRtfFormatting(const QString& text) {
+    // Здесь должна быть реализация добавления RTF форматирования
+    return QString("{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Arial;}}\n\\f0\\fs20 %1}")
+        .arg(text);
 }

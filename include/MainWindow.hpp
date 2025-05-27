@@ -11,7 +11,7 @@
 #include <memory>
 #include <mutex>
 #include "TextDecorator.hpp"
-#include "EditCommand.hpp"
+#include "Command.hpp"
 #include "DocumentObserver.hpp"
 #include "TextIterator.hpp"
 #include "FileFacade.hpp"
@@ -70,8 +70,8 @@ private:
 
     QVector<std::shared_ptr<TextComponent>> editors;
     QVector<QString> filePaths;
-    QVector<std::shared_ptr<TextReceiver>> receivers;
-    QVector<std::vector<std::shared_ptr<EditCommand>>> commandHistory;
+    QVector<std::shared_ptr<ITextReceiver>> receivers;
+    QVector<std::vector<std::shared_ptr<ICommand>>> commandHistory;
     QVector<int> commandIndex;
 
     std::shared_ptr<DocumentSubject> subject;

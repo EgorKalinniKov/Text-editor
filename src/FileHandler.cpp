@@ -3,10 +3,15 @@
 #include <QTextStream>
 #include <stdexcept>
 
+FileHandler& FileHandler::getInstance() {
+    static FileHandler instance;
+    return instance;
+}
+
 QString FileHandler::readFile(const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::runtime_error("Failed to open file for reading");
+        throw std::runtime_error("Cannot open file for reading");
     }
 
     QTextStream in(&file);
@@ -16,14 +21,16 @@ QString FileHandler::readFile(const QString& filePath) {
     return content;
 }
 
-void FileHandler::writeFile(const QString& filePath, const QString& content) {
+bool FileHandler::writeFile(const QString& filePath, const QString& content) {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        throw std::runtime_error("Failed to open file for writing");
+        return false;
     }
 
     QTextStream out(&file);
     out.setCodec("UTF-8");
     out << content;
+    out.flush();
     file.close();
+    return true;
 } 

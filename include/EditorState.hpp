@@ -1,5 +1,4 @@
-#ifndef EDITORSTATE_HPP
-#define EDITORSTATE_HPP
+#pragma once
 
 #include <QString>
 #include <memory>
@@ -7,34 +6,38 @@
 class EditorContext;
 
 // State interface
-class EditorState {
+class IEditorState {
 public:
-    virtual ~EditorState() = default;
+    virtual ~IEditorState() = default;
     virtual void handleEdit(EditorContext* context, const QString& text) = 0;
+    virtual QString getStateName() const = 0;
 };
 
 // Context
 class EditorContext {
 public:
     EditorContext();
-    void setState(std::shared_ptr<EditorState> state);
+    void setState(std::shared_ptr<IEditorState> state);
     void requestEdit(const QString& text);
     QString getStatus() const;
 
 private:
-    std::shared_ptr<EditorState> state;
+    std::shared_ptr<IEditorState> state;
     QString status;
+
+    friend class ReadOnlyState;
+    friend class EditableState;
 };
 
 // Concrete States
-class ReadOnlyState : public EditorState {
+class ReadOnlyState : public IEditorState {
 public:
     void handleEdit(EditorContext* context, const QString& text) override;
+    QString getStateName() const override { return "read-only"; }
 };
 
-class EditableState : public EditorState {
+class EditableState : public IEditorState {
 public:
     void handleEdit(EditorContext* context, const QString& text) override;
+    QString getStateName() const override { return "editable"; }
 };
-
-#endif // EDITORSTATE_HPP

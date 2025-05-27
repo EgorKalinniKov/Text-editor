@@ -147,7 +147,7 @@ void MainWindow::newFile() {
     editors.push_back(editor);
     receivers.push_back(std::make_shared<TextReceiver>());
     filePaths.push_back("");
-    commandHistory.push_back(std::vector<std::shared_ptr<EditCommand>>());
+    commandHistory.push_back(std::vector<std::shared_ptr<ICommand>>());
     commandIndex.push_back(-1);
 
     int index = tabs->addTab(textEdit, tr("Untitled"));
