@@ -2,32 +2,35 @@
 
 #include <QString>
 #include <memory>
-#include "DocumentAdapter.hpp"
 
-class FileFacade {
+// Интерфейс для работы с файлами
+class IFileFacade {
+public:
+    virtual ~IFileFacade() = default;
+    virtual QString loadFile(const QString& filePath, const QString& format) = 0;
+    virtual bool saveFile(const QString& filePath, const QString& content) = 0;
+};
+
+// Реализация интерфейса для работы с файлами
+class FileFacadeImpl : public IFileFacade {
+public:
+    QString loadFile(const QString& filePath, const QString& format) override;
+    bool saveFile(const QString& filePath, const QString& content) override;
+};
+
+// Фасад, предоставляющий упрощенный интерфейс для работы с файлами
+class FileFacade : public IFileFacade {
 public:
     FileFacade();
-    ~FileFacade();
+    ~FileFacade() override;
 
-    QString loadFile(const QString& filePath, const QString& format);
-    bool saveFile(const QString& filePath, const QString& content);
+    QString loadFile(const QString& filePath, const QString& format) override;
+    bool saveFile(const QString& filePath, const QString& content) override;
+
+    // Запрет копирования
+    FileFacade(const FileFacade&) = delete;
+    FileFacade& operator=(const FileFacade&) = delete;
 
 private:
-    class FileFacadeImpl {
-    public:
-        struct FileOperation {
-            QString filePath;
-            QString format;
-            QString content;
-        };
-
-        QString loadFile(const QString& filePath, const QString& format);
-        bool saveFile(const QString& filePath, const QString& content);
-
-    private:
-        QString getFileFormat(const QString& filePath);
-        std::unique_ptr<DocumentTarget> createAdapter(const FileOperation& op);
-    };
-
-    std::unique_ptr<FileFacadeImpl> impl;
+    std::unique_ptr<FileFacadeImpl> pimpl;
 };

@@ -15,6 +15,10 @@ void SimpleTextEdit::setText(const QString& text) {
     textEdit->setPlainText(text);
 }
 
+QString SimpleTextEdit::getFormattedText() {
+    return textEdit->toHtml();
+}
+
 TextDecorator::TextDecorator(std::shared_ptr<TextComponent> component) 
     : wrapped(component) {
     if (!component) {
@@ -30,67 +34,92 @@ void TextDecorator::setText(const QString& text) {
     wrapped->setText(text);
 }
 
-SpellCheckDecorator::SpellCheckDecorator(std::shared_ptr<TextComponent> component)
-    : TextDecorator(component), dictionary(loadDictionary()) {}
-
-QString SpellCheckDecorator::getText() {
-    QString text = wrapped->getText();
-    return spellCheck(text);
+QString TextDecorator::getFormattedText() {
+    return wrapped->getFormattedText();
 }
 
-void SpellCheckDecorator::setText(const QString& text) {
-    QString checkedText = spellCheck(text);
-    wrapped->setText(checkedText);
+// ItalicDecorator implementation
+ItalicDecorator::ItalicDecorator(std::shared_ptr<TextComponent> component)
+    : TextDecorator(component) {}
+
+QString ItalicDecorator::getText() {
+    return removeItalicTags(wrapped->getText());
 }
 
-QString SpellCheckDecorator::spellCheck(const QString& text) {
-    // В реальном приложении здесь была бы проверка орфографии
-    // Сейчас просто демонстрационная реализация
+void ItalicDecorator::setText(const QString& text) {
+    wrapped->setText(addItalicTags(text));
+}
+
+QString ItalicDecorator::getFormattedText() {
+    return addItalicTags(wrapped->getFormattedText());
+}
+
+QString ItalicDecorator::addItalicTags(const QString& text) {
+    return QString("<i>%1</i>").arg(text);
+}
+
+QString ItalicDecorator::removeItalicTags(const QString& text) {
     QString result = text;
-    for (const auto& word : text.split(QRegularExpression("\\s+"))) {
-        if (!dictionary.contains(word.toLower())) {
-            result.replace(word, QString("*%1*").arg(word));
-        }
+    result.remove("<i>");
+    result.remove("</i>");
+    return result;
+}
+
+// ColorDecorator implementation
+ColorDecorator::ColorDecorator(std::shared_ptr<TextComponent> component, const QColor& color)
+    : TextDecorator(component), textColor(color) {}
+
+QString ColorDecorator::getText() {
+    return removeColorTags(wrapped->getText());
+}
+
+void ColorDecorator::setText(const QString& text) {
+    wrapped->setText(addColorTags(text));
+}
+
+QString ColorDecorator::getFormattedText() {
+    return addColorTags(wrapped->getFormattedText());
+}
+
+QString ColorDecorator::addColorTags(const QString& text) {
+    return QString("<font color='%1'>%2</font>")
+        .arg(textColor.name())
+        .arg(text);
+}
+
+QString ColorDecorator::removeColorTags(const QString& text) {
+    QString result = text;
+    static QRegularExpression colorTagRegex("<font color='[^']*'>(.*?)</font>");
+    QRegularExpressionMatch match = colorTagRegex.match(result);
+    if (match.hasMatch()) {
+        result = match.captured(1);
     }
     return result;
 }
 
-QSet<QString> SpellCheckDecorator::loadDictionary() {
-    // В реальном приложении здесь была бы загрузка словаря
-    return QSet<QString>{"the", "a", "an", "in", "on", "at", "to", "for"};
-}
-
-GrammarCheckDecorator::GrammarCheckDecorator(std::shared_ptr<TextComponent> component)
+// BoldDecorator implementation
+BoldDecorator::BoldDecorator(std::shared_ptr<TextComponent> component)
     : TextDecorator(component) {}
 
-QString GrammarCheckDecorator::getText() {
-    QString text = wrapped->getText();
-    return checkGrammar(text);
+QString BoldDecorator::getText() {
+    return removeBoldTags(wrapped->getText());
 }
 
-void GrammarCheckDecorator::setText(const QString& text) {
-    QString checkedText = checkGrammar(text);
-    wrapped->setText(checkedText);
+void BoldDecorator::setText(const QString& text) {
+    wrapped->setText(addBoldTags(text));
 }
 
-QString GrammarCheckDecorator::checkGrammar(const QString& text) {
-    // В реальном приложении здесь была бы проверка грамматики
-    // Сейчас просто демонстрационная реализация
+QString BoldDecorator::getFormattedText() {
+    return addBoldTags(wrapped->getFormattedText());
+}
+
+QString BoldDecorator::addBoldTags(const QString& text) {
+    return QString("<b>%1</b>").arg(text);
+}
+
+QString BoldDecorator::removeBoldTags(const QString& text) {
     QString result = text;
-    
-    // Проверка двойных пробелов
-    result.replace(QRegularExpression("\\s{2,}"), " ");
-    
-    // Проверка пунктуации
-    result.replace(QRegularExpression("\\s+([.,!?])"), "\\1");
-    
-    // Заглавная буква в начале предложения
-    QStringList sentences = result.split(QRegularExpression("[.!?]\\s*"));
-    for (QString& sentence : sentences) {
-        if (!sentence.isEmpty()) {
-            sentence[0] = sentence[0].toUpper();
-        }
-    }
-    
-    return sentences.join(". ");
+    result.remove("<b>");
+    result.remove("</b>");
+    return result;
 }

@@ -2,8 +2,8 @@
 
 #include <QTextEdit>
 #include <QString>
+#include <QColor>
 #include <memory>
-#include <QSet>
 
 // Component interface
 class TextComponent {
@@ -11,6 +11,7 @@ public:
     virtual ~TextComponent() = default;
     virtual QString getText() = 0;
     virtual void setText(const QString& text) = 0;
+    virtual QString getFormattedText() = 0;  // Новый метод для получения форматированного текста
 };
 
 // Concrete Component
@@ -19,6 +20,7 @@ public:
     explicit SimpleTextEdit(QTextEdit* editor);
     QString getText() override;
     void setText(const QString& text) override;
+    QString getFormattedText() override;
 
 private:
     QTextEdit* textEdit;
@@ -30,31 +32,48 @@ public:
     explicit TextDecorator(std::shared_ptr<TextComponent> component);
     QString getText() override;
     void setText(const QString& text) override;
+    QString getFormattedText() override;
 
 protected:
     std::shared_ptr<TextComponent> wrapped;
 };
 
-// Concrete Decorator A
-class SpellCheckDecorator : public TextDecorator {
+// Concrete Decorator A - Italic
+class ItalicDecorator : public TextDecorator {
 public:
-    explicit SpellCheckDecorator(std::shared_ptr<TextComponent> component);
+    explicit ItalicDecorator(std::shared_ptr<TextComponent> component);
     QString getText() override;
     void setText(const QString& text) override;
+    QString getFormattedText() override;
 
 private:
-    QString spellCheck(const QString& text);
-    QSet<QString> loadDictionary();
-    QSet<QString> dictionary;
+    QString addItalicTags(const QString& text);
+    QString removeItalicTags(const QString& text);
 };
 
-// Concrete Decorator B
-class GrammarCheckDecorator : public TextDecorator {
+// Concrete Decorator B - Color
+class ColorDecorator : public TextDecorator {
 public:
-    explicit GrammarCheckDecorator(std::shared_ptr<TextComponent> component);
+    explicit ColorDecorator(std::shared_ptr<TextComponent> component, const QColor& color = Qt::blue);
     QString getText() override;
     void setText(const QString& text) override;
+    QString getFormattedText() override;
 
 private:
-    QString checkGrammar(const QString& text);
+    QString addColorTags(const QString& text);
+    QString removeColorTags(const QString& text);
+    QColor textColor;
+};
+
+// Concrete Decorator C - Bold
+class BoldDecorator : public TextDecorator {
+public:
+    explicit BoldDecorator(std::shared_ptr<TextComponent> component);
+    QString getText() override;
+    void setText(const QString& text) override;
+    QString getFormattedText() override;
+
+private:
+    QString addBoldTags(const QString& text);
+    QString removeBoldTags(const QString& text);
 };

@@ -3,6 +3,11 @@
 #include <QMainWindow>
 #include <QTabWidget>
 #include <QVector>
+#include <QToolBar>
+#include <QAction>
+#include <QColorDialog>
+#include <QStatusBar>
+#include <QLabel>
 #include <memory>
 #include <mutex>
 #include "TextDecorator.hpp"
@@ -31,10 +36,13 @@ private:
     void initializeUI();
     void initializeConnections();
     void setupMenus();
+    void setupToolBar();
+    void setupStatusBar();
     void createFileMenu();
     void createEditMenu();
     void initializeComponents();
     void updateWindowTitle();
+    void updateTextStatistics();
     std::shared_ptr<TextComponent> createTextComponent(QTextEdit* textEdit);
     void openFileAtPath(const QString& filePath);
     void saveFileToPath(const QString& path);
@@ -42,9 +50,22 @@ private:
     bool confirmClose();
     void removeTab(int index);
     void cleanup();
+    void applyTextFormat(const std::function<void(QTextEdit*)>& formatter);
+    QTextEdit* getCurrentEditor() const;
 
     QTabWidget* tabs;
+    QToolBar* toolBar;
+    QStatusBar* statusBar;
+    QLabel* charCountLabel;
+    QLabel* wordCountLabel;
     QAction* saveAction;
+    QAction* newAction;
+    QAction* openAction;
+    QAction* undoAction;
+    QAction* redoAction;
+    QAction* boldAction;
+    QAction* italicAction;
+    QAction* colorAction;
     int currentIndex;
 
     QVector<std::shared_ptr<TextComponent>> editors;
@@ -65,8 +86,12 @@ private slots:
     void onTabChanged(int index);
     void undo();
     void redo();
-    void countCharacters();
     void toggleMode();
+    void toggleBold();
+    void toggleItalic();
+    void chooseColor();
+    void updateActions();
+    void onTextChanged();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
