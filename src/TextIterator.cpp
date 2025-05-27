@@ -1,17 +1,42 @@
 #include "TextIterator.hpp"
 
-ConcreteTextAggregate::ConcreteTextAggregate(const QString& text) : text(text) {}
+ConcreteTextAggregate::ConcreteTextAggregate(const QString& text) : text(text) {
+    iterator = std::make_shared<ConcreteTextIterator>(text);
+}
 
 std::shared_ptr<TextIterator> ConcreteTextAggregate::createIterator() {
-    return std::make_shared<ConcreteTextIterator>(text);
+    if (!iterator) {
+        iterator = std::make_shared<ConcreteTextIterator>(text);
+    }
+    return iterator;
+}
+
+void ConcreteTextAggregate::updateText(const QString& newText) {
+    text = newText;
+    if (iterator) {
+        iterator->setText(newText);
+    }
 }
 
 ConcreteTextIterator::ConcreteTextIterator(const QString& text)
     : text(text), position(0), charCount(0), wordCount(0), inWord(false) {
-    // Начальный подсчет
+    updateCounts();
+}
+
+void ConcreteTextIterator::setText(const QString& newText) {
+    text = newText;
+    position = 0;
+    updateCounts();
+}
+
+void ConcreteTextIterator::updateCounts() {
+    charCount = 0;
+    wordCount = 0;
+    inWord = false;
+
     for (const QChar& ch : text) {
         charCount++;
-        if (ch.isSpace()) {
+        if (ch.isSpace() || ch.isPunct()) {
             if (inWord) {
                 wordCount++;
                 inWord = false;
@@ -23,8 +48,6 @@ ConcreteTextIterator::ConcreteTextIterator(const QString& text)
     if (inWord) {
         wordCount++;
     }
-    position = 0;
-    inWord = false;
 }
 
 bool ConcreteTextIterator::hasNext() {

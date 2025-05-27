@@ -121,6 +121,7 @@ void MainWindow::initializeComponents() {
 void MainWindow::onTabChanged(int index) {
     currentIndex = index;
     updateWindowTitle();
+    updateTextStatistics();
 }
 
 void MainWindow::updateWindowTitle() {
@@ -373,9 +374,9 @@ void MainWindow::updateTextStatistics() {
     }
 
     QString text = editor->toPlainText();
-    int charCount = text.length();
-    int wordCount = text.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts).count();
+    auto aggregate = std::make_shared<ConcreteTextAggregate>(text);
+    auto iterator = aggregate->createIterator();
 
-    charCountLabel->setText(tr("Characters: %1").arg(charCount));
-    wordCountLabel->setText(tr("Words: %1").arg(wordCount));
+    charCountLabel->setText(tr("Characters: %1").arg(iterator->getCharCount()));
+    wordCountLabel->setText(tr("Words: %1").arg(iterator->getWordCount()));
 }
