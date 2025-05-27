@@ -1,8 +1,9 @@
-#ifndef DOCUMENTADAPTER_HPP
-#define DOCUMENTADAPTER_HPP
+#pragma once
 
 #include <QString>
 #include <memory>
+#include <stdexcept>
+#include "FileHandler.hpp"
 
 // Целевой интерфейс (Target)
 class DocumentTarget {
@@ -24,6 +25,8 @@ class RtfDocumentAdapter : public DocumentTarget {
 public:
     QString loadDocument(const QString& filePath) override;
     void saveDocument(const QString& filePath, const QString& content) override;
-};
 
-#endif // DOCUMENTADAPTER_HPP
+private:
+    QString stripRtfFormatting(const QString& content);
+    QString addRtfFormatting(const QString& content);
+};
