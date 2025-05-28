@@ -14,6 +14,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Настройка для создания GUI приложения без консоли на Windows
+if(WIN32)
+    set(GUI_TYPE WIN32)
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
@@ -46,7 +51,7 @@ target_include_directories(TextEditorLib PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(TextEditorLib PUBLIC Qt5::Widgets)
 
 # Создаем исполняемый файл
-add_executable(TextEditorProject src/main.cpp)
+add_executable(TextEditorProject ${GUI_TYPE} src/main.cpp)
 target_link_libraries(TextEditorProject PRIVATE TextEditorLib)
 
 # Добавляем Google Test
