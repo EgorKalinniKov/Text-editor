@@ -14,8 +14,14 @@
 #include "Command.hpp"
 #include "DocumentObserver.hpp"
 #include "TextIterator.hpp"
-#include "FileFacade.hpp"
 #include "EditorState.hpp"
+
+// Forward declarations
+class IDocumentAdapter;
+class TextDocumentAdapter;
+class HtmlDocumentAdapter;
+class XmlDocumentAdapter;
+class RtfDocumentAdapter;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -39,10 +45,10 @@ private:
     void setupToolBar();
     void setupStatusBar();
     void createFileMenu();
-    void createEditMenu();
     void initializeComponents();
     void updateWindowTitle();
     void updateTextStatistics();
+    void updateDocumentState();
     std::shared_ptr<TextComponent> createTextComponent(QTextEdit* textEdit);
     void openFileAtPath(const QString& filePath);
     void saveFileToPath(const QString& path);
@@ -58,6 +64,7 @@ private:
     QStatusBar* statusBar;
     QLabel* charCountLabel;
     QLabel* wordCountLabel;
+    QLabel* stateLabel;
     QAction* saveAction;
     QAction* newAction;
     QAction* openAction;
@@ -75,7 +82,6 @@ private:
     QVector<int> commandIndex;
 
     std::shared_ptr<DocumentSubject> subject;
-    std::shared_ptr<FileFacade> fileFacade;
     std::shared_ptr<EditorContext> editorContext;
 
 private slots:
@@ -86,7 +92,6 @@ private slots:
     void onTabChanged(int index);
     void undo();
     void redo();
-    void toggleMode();
     void toggleBold();
     void toggleItalic();
     void chooseColor();

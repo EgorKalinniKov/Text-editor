@@ -1,4 +1,5 @@
 #include "MainWindow.hpp"
+#include "DocumentAdapter.hpp"
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -79,11 +80,37 @@ void MainWindow::setupStatusBar() {
     statusBar = new QStatusBar(this);
     setStatusBar(statusBar);
 
+    // Добавляем метки для статистики и состояния
+    stateLabel = new QLabel();
     charCountLabel = new QLabel(tr("Characters: 0"));
     wordCountLabel = new QLabel(tr("Words: 0"));
 
+    // Добавляем разделители для лучшего визуального разделения
+    statusBar->addPermanentWidget(new QLabel(" | "));
+    statusBar->addPermanentWidget(stateLabel);
+    statusBar->addPermanentWidget(new QLabel(" | "));
     statusBar->addPermanentWidget(charCountLabel);
+    statusBar->addPermanentWidget(new QLabel(" | "));
     statusBar->addPermanentWidget(wordCountLabel);
+
+    // Устанавливаем начальное состояние
+    updateDocumentState();
+}
+
+void MainWindow::updateDocumentState() {
+    if (editorContext) {
+        QString state = editorContext->getStatus();
+        stateLabel->setText(state);
+        
+        // Изменяем цвет текста в зависимости от состояния
+        if (state.contains("Modified")) {
+            stateLabel->setStyleSheet("QLabel { color: #FF6B6B; }"); // Красный для измененного
+        } else if (state.contains("Saved")) {
+            stateLabel->setStyleSheet("QLabel { color: #4CAF50; }"); // Зеленый для сохраненного
+        } else {
+            stateLabel->setStyleSheet(""); // Сброс стиля
+        }
+    }
 }
 
 void MainWindow::initializeConnections() {
@@ -97,7 +124,6 @@ void MainWindow::initializeConnections() {
 
 void MainWindow::setupMenus() {
     createFileMenu();
-    createEditMenu();
 }
 
 void MainWindow::createFileMenu() {
@@ -107,14 +133,8 @@ void MainWindow::createFileMenu() {
     saveAction = fileMenu->addAction(tr("Save"), this, &MainWindow::saveFile, QKeySequence::Save);
 }
 
-void MainWindow::createEditMenu() {
-    QMenu* editMenu = menuBar()->addMenu(tr("Edit"));
-    editMenu->addAction(tr("Toggle Mode"), this, &MainWindow::toggleMode);
-}
-
 void MainWindow::initializeComponents() {
     subject = std::make_shared<DocumentSubject>();
-    fileFacade = std::make_shared<FileFacade>();
     editorContext = std::make_shared<EditorContext>();
 }
 
@@ -136,8 +156,7 @@ void MainWindow::updateWindowTitle() {
 std::shared_ptr<TextComponent> MainWindow::createTextComponent(QTextEdit* textEdit) {
     auto simpleText = std::make_shared<SimpleTextEdit>(textEdit);
     auto italicText = std::make_shared<ItalicDecorator>(simpleText);
-    auto colorText = std::make_shared<ColorDecorator>(italicText, Qt::blue);
-    return std::make_shared<BoldDecorator>(colorText);
+    return std::make_shared<BoldDecorator>(italicText);
 }
 
 void MainWindow::newFile() {
@@ -220,10 +239,11 @@ void MainWindow::cleanup() {
 }
 
 void MainWindow::openFile() {
+    QString filter = tr("All Supported Files (*.txt *.html *.xml *.rtf);;Text Files (*.txt);;HTML Files (*.html);;XML Files (*.xml);;RTF Files (*.rtf);;All Files (*.*)");
     QString filePath = QFileDialog::getOpenFileName(
         this, tr("Open File"),
         QString(),
-        tr("Text Files (*.txt);;All Files (*.*)")
+        filter
     );
     
     if (filePath.isEmpty()) return;
@@ -232,21 +252,43 @@ void MainWindow::openFile() {
 }
 
 void MainWindow::openFileAtPath(const QString& filePath) {
-    QString format = QFileInfo(filePath).suffix();
-    QString content = fileFacade->loadFile(filePath, "." + format);
+    QString format = QFileInfo(filePath).suffix().toLower();
+    
+    // Создаем соответствующий адаптер в зависимости от формата файла
+    std::shared_ptr<IDocumentAdapter> adapter;
+    if (format == "html") {
+        adapter = std::make_shared<HtmlDocumentAdapter>();
+    } else if (format == "xml") {
+        adapter = std::make_shared<XmlDocumentAdapter>();
+    } else if (format == "rtf") {
+        adapter = std::make_shared<RtfDocumentAdapter>();
+    } else {
+        adapter = std::make_shared<TextDocumentAdapter>();
+    }
 
-    QTextEdit* textEdit = new QTextEdit();
-    textEdit->setHtml(content);
-    auto editor = createTextComponent(textEdit);
+    try {
+        QString content = adapter->loadDocument(filePath);
+        
+        QTextEdit* textEdit = new QTextEdit();
+        connect(textEdit, &QTextEdit::textChanged, this, &MainWindow::onTextChanged);
+        textEdit->setPlainText(content);
+        auto editor = createTextComponent(textEdit);
 
-    editors.push_back(editor);
-    filePaths.push_back(filePath);
-    receivers.push_back(std::make_shared<TextReceiver>());
-    commandHistory.push_back({});
-    commandIndex.push_back(-1);
+        editors.push_back(editor);
+        filePaths.push_back(filePath);
+        receivers.push_back(std::make_shared<TextReceiver>());
+        commandHistory.push_back({});
+        commandIndex.push_back(-1);
 
-    int index = tabs->addTab(textEdit, QFileInfo(filePath).fileName());
-    tabs->setCurrentIndex(index);
+        int index = tabs->addTab(textEdit, QFileInfo(filePath).fileName());
+        tabs->setCurrentIndex(index);
+        
+        // Устанавливаем начальное состояние документа как сохраненный
+        editorContext->setState(std::make_shared<SavedState>());
+        editorContext->requestEdit("Load");
+    } catch (const std::exception& e) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to open file: %1").arg(e.what()));
+    }
 }
 
 void MainWindow::saveFile() {
@@ -254,12 +296,23 @@ void MainWindow::saveFile() {
 
     QString& path = filePaths[currentIndex];
     if (path.isEmpty()) {
+        QString filter = tr("Text Files (*.txt);;HTML Files (*.html);;XML Files (*.xml);;RTF Files (*.rtf);;All Files (*.*)");
+        QString selectedFilter;
         path = QFileDialog::getSaveFileName(
             this, tr("Save File"),
             QString(),
-            tr("Text Files (*.txt);;All Files (*.*)")
+            filter,
+            &selectedFilter
         );
         if (path.isEmpty()) return;
+        
+        // Добавляем расширение, если оно не указано
+        if (!path.contains(".")) {
+            if (selectedFilter.contains("*.txt")) path += ".txt";
+            else if (selectedFilter.contains("*.html")) path += ".html";
+            else if (selectedFilter.contains("*.xml")) path += ".xml";
+            else if (selectedFilter.contains("*.rtf")) path += ".rtf";
+        }
     }
 
     saveFileToPath(path);
@@ -269,19 +322,31 @@ void MainWindow::saveFileToPath(const QString& path) {
     QTextEdit* editorWidget = qobject_cast<QTextEdit*>(tabs->currentWidget());
     if (!editorWidget) return;
 
-    QString content;
-    if (auto editor = editors[currentIndex]) {
-        content = editor->getFormattedText();
+    QString content = editorWidget->toPlainText();
+    QString format = QFileInfo(path).suffix().toLower();
+    
+    std::shared_ptr<IDocumentAdapter> adapter;
+    if (format == "html") {
+        adapter = std::make_shared<HtmlDocumentAdapter>();
+    } else if (format == "xml") {
+        adapter = std::make_shared<XmlDocumentAdapter>();
+    } else if (format == "rtf") {
+        adapter = std::make_shared<RtfDocumentAdapter>();
     } else {
-        content = editorWidget->toHtml();
+        adapter = std::make_shared<TextDocumentAdapter>();
     }
 
-    if (fileFacade->saveFile(path, content)) {
+    try {
+        adapter->saveDocument(path, content);
         tabs->setTabText(currentIndex, QFileInfo(path).fileName());
         filePaths[currentIndex] = path;
         updateWindowTitle();
-    } else {
-        QMessageBox::warning(this, tr("Error"), tr("Failed to save file."));
+        
+        // Устанавливаем состояние "Saved" после успешного сохранения
+        editorContext->setState(std::make_shared<SavedState>());
+        updateDocumentState();
+    } catch (const std::exception& e) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to save file: %1").arg(e.what()));
     }
 }
 
@@ -295,17 +360,6 @@ void MainWindow::redo() {
     if (QTextEdit* editor = getCurrentEditor()) {
         editor->redo();
     }
-}
-
-void MainWindow::toggleMode() {
-    if (editorContext->getStatus().contains("read-only")) {
-        editorContext->setState(std::make_shared<EditableState>());
-    } else {
-        editorContext->setState(std::make_shared<ReadOnlyState>());
-    }
-
-    editorContext->requestEdit("Toggle");
-    QMessageBox::information(this, tr("Mode"), editorContext->getStatus());
 }
 
 QTextEdit* MainWindow::getCurrentEditor() const {
@@ -363,6 +417,12 @@ void MainWindow::chooseColor() {
 
 void MainWindow::onTextChanged() {
     updateTextStatistics();
+    
+    // При изменении текста устанавливаем состояние "Modified"
+    if (editorContext) {
+        editorContext->setState(std::make_shared<ModifiedState>());
+        updateDocumentState();
+    }
 }
 
 void MainWindow::updateTextStatistics() {
