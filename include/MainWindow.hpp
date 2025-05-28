@@ -15,13 +15,7 @@
 #include "DocumentObserver.hpp"
 #include "TextIterator.hpp"
 #include "EditorState.hpp"
-
-// Forward declarations
-class IDocumentAdapter;
-class TextDocumentAdapter;
-class HtmlDocumentAdapter;
-class XmlDocumentAdapter;
-class RtfDocumentAdapter;
+#include "DocumentAdapter.hpp"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
