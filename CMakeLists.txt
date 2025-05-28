@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Находим Qt5
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Test REQUIRED)
 
 # Включаем автогенерацию MOC файлов Qt
 set(CMAKE_AUTOMOC ON)
@@ -17,7 +17,6 @@ set(CMAKE_AUTOUIC ON)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
-    src/main.cpp
     src/MainWindow.cpp
     src/TextDecorator.cpp
     src/DocumentAdapter.cpp
@@ -41,6 +40,28 @@ set(HEADERS
     include/FileFacade.hpp
 )
 
-add_executable(TextEditorProject ${SOURCES} ${HEADERS})
+# Создаем библиотеку из исходных файлов
+add_library(TextEditorLib STATIC ${SOURCES} ${HEADERS})
+target_include_directories(TextEditorLib PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(TextEditorLib PUBLIC Qt5::Widgets)
 
-target_link_libraries(TextEditorProject Qt5::Widgets)
+# Создаем исполняемый файл
+add_executable(TextEditorProject src/main.cpp)
+target_link_libraries(TextEditorProject PRIVATE TextEditorLib)
+
+# Добавляем Google Test
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+# Отключаем установку Google Test, так как он нужен только для тестирования
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# Включаем тестирование
+enable_testing()
+
+# Добавляем тесты
+add_subdirectory(tests)

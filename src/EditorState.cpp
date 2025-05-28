@@ -1,23 +1,28 @@
 #include "EditorState.hpp"
 #include <QDateTime>
 
-EditorContext::EditorContext() : state(std::make_shared<SavedState>()) {}
+EditorContext::EditorContext() : state(std::make_shared<SavedState>()) {
+    status = state->getStateName();
+}
 
 void EditorContext::setState(std::shared_ptr<IEditorState> newState) {
     this->state = newState;
     this->status = state->getStateName();
     this->lastModified = QDateTime::currentDateTime();
+    notifyStateChanged();
 }
 
 void EditorContext::requestEdit(const QString& text) {
     if (state) {
         state->handleEdit(this, text);
+        notifyStateChanged();
     }
 }
 
 void EditorContext::requestSave() {
     if (state) {
         state->handleSave(this);
+        notifyStateChanged();
     }
 }
 
@@ -29,6 +34,20 @@ QDateTime EditorContext::getLastModified() const {
     return lastModified;
 }
 
+void EditorContext::notifyStateChanged() {
+    for (const auto& observer : observers) {
+        if (observer) {
+            observer->onStateChanged(status);
+        }
+    }
+}
+
+void EditorContext::addStateObserver(std::shared_ptr<IStateObserver> observer) {
+    if (observer) {
+        observers.push_back(observer);
+    }
+}
+
 // Saved State
 void SavedState::handleEdit(EditorContext* context, const QString& text) {
     context->content = text;
@@ -36,6 +55,7 @@ void SavedState::handleEdit(EditorContext* context, const QString& text) {
 }
 
 void SavedState::handleSave(EditorContext* context) {
+    // Документ уже сохранен
     context->status = "Document already saved";
 }
 
@@ -50,7 +70,7 @@ void ModifiedState::handleEdit(EditorContext* context, const QString& text) {
 }
 
 void ModifiedState::handleSave(EditorContext* context) {
-    // Here would be actual save logic
+    // Здесь была бы логика сохранения
     context->setState(std::make_shared<SavedState>());
     context->status = "Document saved successfully";
 }
@@ -70,7 +90,7 @@ void AutoSavingState::handleEdit(EditorContext* context, const QString& text) {
 }
 
 void AutoSavingState::handleSave(EditorContext* context) {
-    // Here would be auto-save logic
+    // Здесь была бы логика автосохранения
     lastAutoSave = QDateTime::currentDateTime();
     context->setState(std::make_shared<SavedState>());
     context->status = "Document auto-saved";
@@ -94,7 +114,7 @@ void ErrorState::handleSave(EditorContext* context) {
 }
 
 QString ErrorState::getStateName() const {
-    return "Error";
+    return "Error: " + errorMessage;
 }
 
 ErrorState::ErrorState(const QString& message) : errorMessage(message) {}

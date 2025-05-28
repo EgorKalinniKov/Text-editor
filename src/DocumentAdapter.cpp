@@ -96,6 +96,9 @@ QString HtmlDocumentAdapter::stripHtmlTags(const QString& htmlText) {
     // Remove DOCTYPE and HTML comments
     text.remove(QRegularExpression(R"(<!DOCTYPE[^>]*>|<!--[\s\S]*?-->)"));
     
+    // Remove style tags and their content
+    text.remove(QRegularExpression(R"(<style[^>]*>.*?</style>)", QRegularExpression::DotMatchesEverythingOption));
+    
     // Remove HTML tags
     text.remove(QRegularExpression(R"(<[^>]*>)"));
     
@@ -112,10 +115,6 @@ QString HtmlDocumentAdapter::stripHtmlTags(const QString& htmlText) {
 QString HtmlDocumentAdapter::addHtmlTags(const QString& text) {
     QString htmlContent = "<!DOCTYPE html>\n<html>\n<head>\n";
     htmlContent += "<meta charset=\"UTF-8\">\n";
-    htmlContent += "<style>\n";
-    htmlContent += "body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em; }\n";
-    htmlContent += "p { margin-bottom: 1em; }\n";
-    htmlContent += "</style>\n";
     htmlContent += "</head>\n<body>\n";
     
     // Convert newlines to paragraphs and preserve formatting
