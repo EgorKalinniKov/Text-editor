@@ -1,50 +1,51 @@
-#ifndef DOCUMENTADAPTER_HPP
-#define DOCUMENTADAPTER_HPP
+#pragma once
 
 #include <QString>
 
-// Target interface
-class DocumentTarget {
+// Abstract Document Adapter
+class IDocumentAdapter {
 public:
-    virtual ~DocumentTarget() = default;
+    virtual ~IDocumentAdapter() = default;
     virtual QString loadDocument(const QString& filePath) = 0;
     virtual void saveDocument(const QString& filePath, const QString& content) = 0;
 };
 
-// Adaptee for .txt files
-class TextDocument {
+// Plain Text Adapter
+class TextDocumentAdapter : public IDocumentAdapter {
 public:
-    QString readTextFile(const QString& filePath);
-    void writeTextFile(const QString& filePath, const QString& content);
+    QString loadDocument(const QString& filePath) override;
+    void saveDocument(const QString& filePath, const QString& content) override;
 };
 
-// Adaptee for .rtf files (simplified)
-class RtfDocument {
+// RTF Adapter
+class RtfDocumentAdapter : public IDocumentAdapter {
 public:
-    QString readRtfFile(const QString& filePath);
-    void writeRtfFile(const QString& filePath, const QString& content);
-};
-
-// Adapter for .txt files
-class TextDocumentAdapter : public DocumentTarget {
-public:
-    TextDocumentAdapter();
     QString loadDocument(const QString& filePath) override;
     void saveDocument(const QString& filePath, const QString& content) override;
 
 private:
-    TextDocument textDoc;
+    QString stripRtfFormatting(const QString& rtfText);
+    QString addRtfFormatting(const QString& text);
 };
 
-// Adapter for .rtf files
-class RtfDocumentAdapter : public DocumentTarget {
+// HTML Adapter
+class HtmlDocumentAdapter : public IDocumentAdapter {
 public:
-    RtfDocumentAdapter();
     QString loadDocument(const QString& filePath) override;
     void saveDocument(const QString& filePath, const QString& content) override;
 
 private:
-    RtfDocument rtfDoc;
+    QString stripHtmlTags(const QString& htmlText);
+    QString addHtmlTags(const QString& text);
 };
 
-#endif // DOCUMENTADAPTER_HPP
+// XML Adapter
+class XmlDocumentAdapter : public IDocumentAdapter {
+public:
+    QString loadDocument(const QString& filePath) override;
+    void saveDocument(const QString& filePath, const QString& content) override;
+
+private:
+    QString parseXmlContent(const QString& xmlText);
+    QString createXmlContent(const QString& text);
+};

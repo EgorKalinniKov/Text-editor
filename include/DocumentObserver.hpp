@@ -1,29 +1,38 @@
-#ifndef DOCUMENTOBSERVER_HPP
-#define DOCUMENTOBSERVER_HPP
+#pragma once
 
 #include <QString>
 #include <vector>
 #include <memory>
 
 // Observer interface
-class DocumentObserver {
+class IDocumentObserver {
 public:
-    virtual ~DocumentObserver() = default;
+    virtual ~IDocumentObserver() = default;
     virtual void update(const QString& content) = 0;
 };
 
-// Subject
-class DocumentSubject {
+// Subject interface
+class IDocumentSubject {
 public:
-    void attach(std::shared_ptr<DocumentObserver> observer);
-    void notify(const QString& content);
-
-private:
-    std::vector<std::shared_ptr<DocumentObserver>> observers;
+    virtual ~IDocumentSubject() = default;
+    virtual void attach(std::shared_ptr<IDocumentObserver> observer) = 0;
+    virtual void detach(std::shared_ptr<IDocumentObserver> observer) = 0;
+    virtual void notify(const QString& content) = 0;
 };
 
-// Concrete Observer (UI component)
-class TextEditObserver : public DocumentObserver {
+// Concrete Subject
+class DocumentSubject : public IDocumentSubject {
+public:
+    void attach(std::shared_ptr<IDocumentObserver> observer) override;
+    void detach(std::shared_ptr<IDocumentObserver> observer) override;
+    void notify(const QString& content) override;
+
+private:
+    std::vector<std::shared_ptr<IDocumentObserver>> observers;
+};
+
+// Concrete Observer
+class TextEditObserver : public IDocumentObserver {
 public:
     TextEditObserver();
     void update(const QString& content) override;
@@ -32,5 +41,3 @@ public:
 private:
     QString lastUpdate;
 };
-
-#endif // DOCUMENTOBSERVER_HPP

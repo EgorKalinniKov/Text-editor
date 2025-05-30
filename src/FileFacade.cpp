@@ -1,39 +1,46 @@
 #include "FileFacade.hpp"
-#include "DocumentAdapter.hpp"
+#include <QFile>
+#include <QTextStream>
+#include <QFileInfo>
+#include <QCoreApplication>
 
-class FileFacade::FileFacadeImpl {
-public:
-    QString loadFile(const QString& filePath, const QString& format) {
-        std::unique_ptr<DocumentTarget> adapter;
-        if (format == ".txt") {
-            adapter = std::make_unique<TextDocumentAdapter>();
-        } else if (format == ".rtf") {
-            adapter = std::make_unique<RtfDocumentAdapter>();
-        } else {
-            return "Unsupported format";
-        }
-        return adapter->loadDocument(filePath);
+// Реализация методов FileFacadeImpl
+QString FileFacadeImpl::loadFile(const QString& filePath, const QString& format) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error(QCoreApplication::translate("FileFacade", "Cannot open file for reading").toStdString());
     }
 
-    void saveFile(const QString& filePath, const QString& content, const QString& format) {
-        std::unique_ptr<DocumentTarget> adapter;
-        if (format == ".txt") {
-            adapter = std::make_unique<TextDocumentAdapter>();
-        } else if (format == ".rtf") {
-            adapter = std::make_unique<RtfDocumentAdapter>();
-        } else {
-            return;
-        }
-        adapter->saveDocument(filePath, content);
-    }
-};
-
-FileFacade::FileFacade() : impl(std::make_shared<FileFacadeImpl>()) {}
-
-QString FileFacade::loadFile(const QString& filePath, const QString& format) {
-    return impl->loadFile(filePath, format);
+    QTextStream in(&file);
+    in.setCodec("UTF-8");  // Устанавливаем кодировку UTF-8
+    QString content = in.readAll();
+    file.close();
+    return content;
 }
 
-void FileFacade::saveFile(const QString& filePath, const QString& content, const QString& format) {
-    impl->saveFile(filePath, content, format);
+bool FileFacadeImpl::saveFile(const QString& filePath, const QString& content) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream out(&file);
+    out.setCodec("UTF-8");  // Устанавливаем кодировку UTF-8
+    out << content;
+    out.flush();  // Принудительно записываем буфер
+    file.close();
+    return true;
+}
+
+// Реализация методов FileFacade
+FileFacade::FileFacade() : pimpl(std::make_unique<FileFacadeImpl>()) {}
+
+FileFacade::~FileFacade() = default;
+
+QString FileFacade::loadFile(const QString& filePath, const QString& format) {
+    return pimpl->loadFile(filePath, format);
+}
+
+bool FileFacade::saveFile(const QString& filePath, const QString& content) {
+    return pimpl->saveFile(filePath, content);
 }
